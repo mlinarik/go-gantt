@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  go-ghant:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/root
+    environment:
+      - PORT=8080
+    restart: unless-stopped

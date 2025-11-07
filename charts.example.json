@@ -1,0 +1,122 @@
+{
+  "example-1": {
+    "id": "example-1",
+    "title": "Product Development Roadmap 2024-2025",
+    "startYear": 2024,
+    "startQuarter": 1,
+    "endYear": 2025,
+    "endQuarter": 4,
+    "categories": [
+      {
+        "id": "cat-1",
+        "name": "Planning & Research",
+        "color": "#3498db",
+        "tasks": [
+          {
+            "id": "task-1",
+            "title": "Market Research",
+            "description": "Analyze market trends and competitor landscape",
+            "startYear": 2024,
+            "startQuarter": 1,
+            "endYear": 2024,
+            "endQuarter": 1,
+            "color": ""
+          },
+          {
+            "id": "task-2",
+            "title": "Requirements Gathering",
+            "description": "Define product specifications and user stories",
+            "startYear": 2024,
+            "startQuarter": 1,
+            "endYear": 2024,
+            "endQuarter": 2,
+            "color": ""
+          }
+        ]
+      },
+      {
+        "id": "cat-2",
+        "name": "Development",
+        "color": "#27ae60",
+        "tasks": [
+          {
+            "id": "task-3",
+            "title": "MVP Development",
+            "description": "Build minimum viable product with core features",
+            "startYear": 2024,
+            "startQuarter": 2,
+            "endYear": 2024,
+            "endQuarter": 4,
+            "color": ""
+          },
+          {
+            "id": "task-4",
+            "title": "Feature Enhancements",
+            "description": "Add advanced features based on user feedback",
+            "startYear": 2025,
+            "startQuarter": 1,
+            "endYear": 2025,
+            "endQuarter": 3,
+            "color": ""
+          }
+        ]
+      },
+      {
+        "id": "cat-3",
+        "name": "Testing & QA",
+        "color": "#e74c3c",
+        "tasks": [
+          {
+            "id": "task-5",
+            "title": "Alpha Testing",
+            "description": "Internal testing and bug fixing",
+            "startYear": 2024,
+            "startQuarter": 3,
+            "endYear": 2024,
+            "endQuarter": 4,
+            "color": ""
+          },
+          {
+            "id": "task-6",
+            "title": "Beta Testing",
+            "description": "External user testing and feedback collection",
+            "startYear": 2025,
+            "startQuarter": 1,
+            "endYear": 2025,
+            "endQuarter": 2,
+            "color": ""
+          }
+        ]
+      },
+      {
+        "id": "cat-4",
+        "name": "Launch & Marketing",
+        "color": "#f39c12",
+        "tasks": [
+          {
+            "id": "task-7",
+            "title": "Marketing Campaign",
+            "description": "Prepare marketing materials and strategy",
+            "startYear": 2025,
+            "startQuarter": 2,
+            "endYear": 2025,
+            "endQuarter": 3,
+            "color": ""
+          },
+          {
+            "id": "task-8",
+            "title": "Product Launch",
+            "description": "Official product release and announcement",
+            "startYear": 2025,
+            "startQuarter": 3,
+            "endYear": 2025,
+            "endQuarter": 3,
+            "color": "#e67e22"
+          }
+        ]
+      }
+    ],
+    "createdAt": "2024-01-15T10:00:00Z",
+    "updatedAt": "2024-01-15T10:00:00Z"
+  }
+}

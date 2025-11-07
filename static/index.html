@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gantt Chart Creator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🗓️ Gantt Chart Creator</h1>
+            <div class="header-actions">
+                <button id="newChartBtn" class="btn btn-primary">New Chart</button>
+                <button id="saveChartBtn" class="btn btn-success">Save Chart</button>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <aside class="sidebar">
+                <h2>Chart Settings</h2>
+                <div class="form-group">
+                    <label for="chartTitle">Chart Title</label>
+                    <input type="text" id="chartTitle" placeholder="My Gantt Chart">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="startYear">Start Year</label>
+                        <input type="number" id="startYear" value="2024" min="2020" max="2050">
+                    </div>
+                    <div class="form-group">
+                        <label for="startQuarter">Start Q</label>
+                        <select id="startQuarter">
+                            <option value="1">Q1</option>
+                            <option value="2">Q2</option>
+                            <option value="3">Q3</option>
+                            <option value="4">Q4</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="endYear">End Year</label>
+                        <input type="number" id="endYear" value="2025" min="2020" max="2050">
+                    </div>
+                    <div class="form-group">
+                        <label for="endQuarter">End Q</label>
+                        <select id="endQuarter">
+                            <option value="1">Q1</option>
+                            <option value="2">Q2</option>
+                            <option value="3">Q3</option>
+                            <option value="4" selected>Q4</option>
+                        </select>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="categories-section">
+                    <h3>Categories</h3>
+                    <div id="categoriesList"></div>
+                    <button id="addCategoryBtn" class="btn btn-secondary btn-block">+ Add Category</button>
+                </div>
+
+                <hr>
+
+                <div class="export-section">
+                    <h3>Export</h3>
+                    <button id="exportSVG" class="btn btn-info btn-block">Export as SVG</button>
+                    <button id="exportPNG" class="btn btn-info btn-block">Export as PNG</button>
+                    <button id="exportPDF" class="btn btn-info btn-block">Export as PDF</button>
+                </div>
+            </aside>
+
+            <main class="chart-area">
+                <div id="chartPreview" class="chart-preview">
+                    <div class="empty-state">
+                        <h2>👈 Create a new chart to get started</h2>
+                        <p>Add categories and tasks, then adjust the timeline</p>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Category Modal -->
+    <div id="categoryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="categoryModalTitle">Add Category</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="categoryName">Category Name</label>
+                    <input type="text" id="categoryName" placeholder="e.g., Development">
+                </div>
+                <div class="form-group">
+                    <label for="categoryColor">Color</label>
+                    <input type="color" id="categoryColor" value="#6495ed">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelCategory" class="btn btn-secondary">Cancel</button>
+                <button id="saveCategory" class="btn btn-primary">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Modal -->
+    <div id="taskModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="taskModalTitle">Add Task</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="taskTitle">Task Title</label>
+                    <input type="text" id="taskTitle" placeholder="e.g., Build MVP">
+                </div>
+                <div class="form-group">
+                    <label for="taskDescription">Description</label>
+                    <textarea id="taskDescription" rows="3" placeholder="Additional notes..."></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="taskStartYear">Start Year</label>
+                        <input type="number" id="taskStartYear" min="2020" max="2050">
+                    </div>
+                    <div class="form-group">
+                        <label for="taskStartQuarter">Start Q</label>
+                        <select id="taskStartQuarter">
+                            <option value="1">Q1</option>
+                            <option value="2">Q2</option>
+                            <option value="3">Q3</option>
+                            <option value="4">Q4</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="taskEndYear">End Year</label>
+                        <input type="number" id="taskEndYear" min="2020" max="2050">
+                    </div>
+                    <div class="form-group">
+                        <label for="taskEndQuarter">End Q</label>
+                        <select id="taskEndQuarter">
+                            <option value="1">Q1</option>
+                            <option value="2">Q2</option>
+                            <option value="3">Q3</option>
+                            <option value="4">Q4</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="taskColor">Custom Color (optional)</label>
+                    <input type="color" id="taskColor">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelTask" class="btn btn-secondary">Cancel</button>
+                <button id="saveTask" class="btn btn-primary">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
