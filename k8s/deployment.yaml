@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: go-ghantt
-        image: harbor.mlinarik.com/mlinarik/go-ghantt:1.01
+        image: docker.io/mlinarik/go-ghantt:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
