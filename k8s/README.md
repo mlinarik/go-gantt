@@ -54,12 +54,12 @@ The application will be available at: https://go-ghantt.mlinarik.com
 
 ### Image
 
-The deployment uses: `harbor.mlinarik.com/mlinarik/go-ghantt:1.01`
+The deployment uses: `docker.io/mlinarik/go-ghantt:latest`
 
 To update to a new version:
 
 ```bash
-kubectl set image deployment/go-ghantt go-ghantt=harbor.mlinarik.com/mlinarik/go-ghantt:1.02 -n go-ghantt
+kubectl set image deployment/go-ghantt go-ghantt=docker.io/mlinarik/go-ghantt:1.02 -n go-ghantt
 ```
 
 ### Storage
