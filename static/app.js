@@ -29,7 +29,7 @@ function setupEventListeners() {
     document.getElementById('endQuarter').addEventListener('change', updateChartSettings);
     
     // Category modal
-    document.getElementById('addCategoryBtn').addEventListener('click', openCategoryModal);
+    document.getElementById('addCategoryBtn').addEventListener('click', () => openCategoryModal());
     document.getElementById('saveCategory').addEventListener('click', saveCategory);
     document.getElementById('cancelCategory').addEventListener('click', closeCategoryModal);
     
@@ -418,20 +418,58 @@ function generateClientSVG(chart) {
     }
     
     const headerHeight = 80;
-    const rowHeight = 40;
+    const baseRowHeight = 40; // minimum row height
     const quarterWidth = 120;
     const labelWidth = 200;
     const padding = 20;
     const categoryHeaderHeight = 35;
-    
-    let totalRows = 0;
+    const titleLineHeight = 14;
+    const descLineHeight = 12;
+    const verticalPaddingPerTask = 8;
+
+    // Helper to wrap text roughly by character count
+    function wrapText(text, maxChars) {
+        if (!text) return [];
+        const words = text.split(/\s+/);
+        const lines = [];
+        let line = '';
+        words.forEach(w => {
+            if ((line + ' ' + w).trim().length <= maxChars) {
+                line = (line + ' ' + w).trim();
+            } else {
+                if (line) lines.push(line);
+                line = w;
+            }
+        });
+        if (line) lines.push(line);
+        return lines;
+    }
+
+    // Calculate dynamic heights per task and category
+    let totalCategoryHeadersHeight = 0;
+    let totalTaskHeight = 0;
+    const perTaskHeights = new Map();
+    const perCategoryHeights = new Map();
     chart.categories.forEach(cat => {
-        totalRows++;
-        totalRows += cat.tasks.length;
+        const catNameLines = wrapText(cat.name || '', 30);
+        let catH = categoryHeaderHeight;
+        if (catNameLines.length > 1) {
+            catH = 18 + catNameLines.length * 14; // base + lines * lineheight
+        }
+        perCategoryHeights.set(cat.id, catH);
+        totalCategoryHeadersHeight += catH;
+        
+        cat.tasks.forEach(task => {
+            const titleLines = wrapText(task.title || '', 28);
+            const descLines = wrapText(task.description || '', 36);
+            const h = Math.max(baseRowHeight, titleLines.length * titleLineHeight + descLines.length * descLineHeight + verticalPaddingPerTask);
+            perTaskHeights.set(task.id, h);
+            totalTaskHeight += h;
+        });
     });
-    
+
     const width = labelWidth + quarters.length * quarterWidth + padding * 2;
-    const height = headerHeight + totalRows * rowHeight + padding * 2;
+    const height = headerHeight + totalCategoryHeadersHeight + totalTaskHeight + padding * 2;
     
     let svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">`;
     svg += `<defs><style>.title{font:bold 20px sans-serif;fill:#333}.header{font:bold 12px sans-serif;fill:#555}.label{font:12px sans-serif;fill:#333}.category{font:bold 14px sans-serif;fill:#222}.desc{font:10px sans-serif;fill:#666}</style></defs>`;
@@ -448,32 +486,64 @@ function generateClientSVG(chart) {
         svg += `<line x1="${x}" y1="${y}" x2="${x}" y2="${height - padding}" stroke="#ddd" stroke-width="1"/>`;
     });
     
-    // Categories and tasks
+    // Categories and tasks - render with wrapping
     let currentY = headerHeight;
     chart.categories.forEach(cat => {
-        svg += `<rect x="${padding}" y="${currentY}" width="${labelWidth}" height="${categoryHeaderHeight}" fill="${cat.color}" opacity="0.3"/>`;
-        svg += `<text x="${padding + 10}" y="${currentY + 22}" class="category">${escapeHtml(cat.name)}</text>`;
-        svg += `<rect x="${padding + labelWidth}" y="${currentY}" width="${quarters.length * quarterWidth}" height="${categoryHeaderHeight}" fill="${cat.color}" opacity="0.05"/>`;
-        currentY += categoryHeaderHeight;
-        
+        const catH = perCategoryHeights.get(cat.id) || categoryHeaderHeight;
+        svg += `<rect x="${padding}" y="${currentY}" width="${labelWidth}" height="${catH}" fill="${cat.color}" opacity="0.3"/>`;
+        // wrap category name if long
+        const catLines = wrapText(cat.name || '', 30);
+        if (catLines.length <= 1) {
+            svg += `<text x="${padding + 10}" y="${currentY + 22}" class="category">${escapeHtml(cat.name)}</text>`;
+        } else {
+            svg += `<text x="${padding + 10}" y="${currentY + 18}" class="category">`;
+            catLines.forEach((ln, idx) => {
+                const dy = idx === 0 ? 4 : 14;
+                svg += `<tspan x="${padding + 10}" dy="${dy}">${escapeHtml(ln)}</tspan>`;
+            });
+            svg += `</text>`;
+        }
+        svg += `<rect x="${padding + labelWidth}" y="${currentY}" width="${quarters.length * quarterWidth}" height="${catH}" fill="${cat.color}" opacity="0.05"/>`;
+        currentY += catH;
+
         cat.tasks.forEach(task => {
-            svg += `<rect x="${padding}" y="${currentY}" width="${labelWidth}" height="${rowHeight}" fill="#fff" stroke="#ddd" stroke-width="1"/>`;
-            svg += `<text x="${padding + 10}" y="${currentY + 18}" class="label">${escapeHtml(task.title.substring(0, 25))}</text>`;
-            
+            const taskH = perTaskHeights.get(task.id) || baseRowHeight;
+            svg += `<rect x="${padding}" y="${currentY}" width="${labelWidth}" height="${taskH}" fill="#fff" stroke="#ddd" stroke-width="1"/>`;
+
+            // Title lines
+            const titleLines = wrapText(task.title || '', 28);
+            const descLines = wrapText(task.description || '', 36);
+            let textY = currentY + 14;
+            if (titleLines.length > 0) {
+                svg += `<text x="${padding + 10}" y="${textY}" class="label">`;
+                titleLines.forEach((ln, idx) => {
+                    const dy = idx === 0 ? 0 : titleLineHeight;
+                    svg += `<tspan x="${padding + 10}" dy="${dy}">${escapeHtml(ln)}</tspan>`;
+                });
+                svg += `</text>`;
+                textY += titleLines.length * titleLineHeight;
+            }
+            if (descLines.length > 0) {
+                svg += `<text x="${padding + 10}" y="${textY + 4}" class="desc">`;
+                descLines.forEach((ln, idx) => {
+                    const dy = idx === 0 ? 0 : descLineHeight;
+                    svg += `<tspan x="${padding + 10}" dy="${dy}">${escapeHtml(ln)}</tspan>`;
+                });
+                svg += `</text>`;
+            }
+
             const startIdx = quarters.findIndex(q => q.year === task.startYear && q.quarter === task.startQuarter);
             const endIdx = quarters.findIndex(q => q.year === task.endYear && q.quarter === task.endQuarter);
-            
             if (startIdx >= 0 && endIdx >= 0) {
                 const barX = padding + labelWidth + startIdx * quarterWidth;
                 const barWidth = (endIdx - startIdx + 1) * quarterWidth;
                 const barY = currentY + 8;
-                const barHeight = rowHeight - 16;
+                const barHeight = Math.max(12, taskH - 16);
                 const taskColor = task.color || cat.color;
-                
                 svg += `<rect x="${barX + 2}" y="${barY}" width="${barWidth - 4}" height="${barHeight}" fill="${taskColor}" rx="4" opacity="0.8"/>`;
             }
-            
-            currentY += rowHeight;
+
+            currentY += taskH;
         });
     });
     

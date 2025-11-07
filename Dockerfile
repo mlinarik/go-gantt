@@ -4,7 +4,7 @@ FROM golang:1.21-alpine AS builder
 WORKDIR /app
 
 # Copy go mod files
-COPY go.mod ./
+COPY go.mod go.sum* ./
 RUN go mod download
 
 # Copy source code
@@ -18,10 +18,10 @@ FROM alpine:latest
 
 RUN apk --no-cache add ca-certificates
 
-WORKDIR /root/
+WORKDIR /app
 
 # Copy binary from builder
-COPY --from=builder /app/go-ghant .
+COPY --from=builder /app/go-ghant ./go-ghant
 
 # Copy static files
 COPY static ./static
@@ -30,4 +30,4 @@ COPY static ./static
 EXPOSE 8080
 
 # Run the application
-CMD ["./go-ghant"]
+CMD ["/app/go-ghant"]

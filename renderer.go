@@ -14,21 +14,72 @@ func GenerateSVG(chart *Chart) (string, error) {
 
 	// Layout constants
 	headerHeight := 80
-	rowHeight := 40
+	baseRowHeight := 40
 	quarterWidth := 120
 	labelWidth := 200
 	padding := 20
 	categoryHeaderHeight := 35
+	titleLineHeight := 14
+	descLineHeight := 12
+	verticalPaddingPerTask := 8
 
-	// Count total rows
-	totalRows := 0
+	// Helper to wrap text by approx character count
+	wrapText := func(s string, maxChars int) []string {
+		if s == "" {
+			return []string{}
+		}
+		parts := strings.Fields(s)
+		var lines []string
+		line := ""
+		for _, w := range parts {
+			if len((line + " " + w)) <= maxChars {
+				if line == "" {
+					line = w
+				} else {
+					line = line + " " + w
+				}
+			} else {
+				if line != "" {
+					lines = append(lines, line)
+				}
+				line = w
+			}
+		}
+		if line != "" {
+			lines = append(lines, line)
+		}
+		return lines
+	}
+
+	// Calculate dynamic heights per task and category
+	totalCategoryHeadersHeight := 0
+	totalTaskHeight := 0
+	perTaskHeights := make(map[string]int)
+	perCategoryHeights := make(map[string]int)
 	for _, cat := range chart.Categories {
-		totalRows++ // Category header
-		totalRows += len(cat.Tasks)
+		catNameLines := wrapText(cat.Name, 30)
+		catH := categoryHeaderHeight
+		if len(catNameLines) > 1 {
+			catH = 18 + len(catNameLines)*14 // base + lines * lineheight
+		}
+		perCategoryHeights[cat.ID] = catH
+		totalCategoryHeadersHeight += catH
+
+		for _, task := range cat.Tasks {
+			titleLines := wrapText(task.Title, 28)
+			descLines := wrapText(task.Description, 36)
+			h := baseRowHeight
+			calc := len(titleLines)*titleLineHeight + len(descLines)*descLineHeight + verticalPaddingPerTask
+			if calc > h {
+				h = calc
+			}
+			perTaskHeights[task.ID] = h
+			totalTaskHeight += h
+		}
 	}
 
 	width := labelWidth + totalQuarters*quarterWidth + padding*2
-	height := headerHeight + totalRows*rowHeight + padding*2
+	height := headerHeight + totalCategoryHeadersHeight + totalTaskHeight + padding*2
 
 	var buf bytes.Buffer
 
@@ -67,32 +118,75 @@ func GenerateSVG(chart *Chart) (string, error) {
 	// Draw categories and tasks
 	currentY := headerHeight
 	for _, cat := range chart.Categories {
-		// Category header
+		// Category header - dynamic height
+		catH := perCategoryHeights[cat.ID]
+		if catH == 0 {
+			catH = categoryHeaderHeight
+		}
+
 		buf.WriteString(fmt.Sprintf(`<rect x="%d" y="%d" width="%d" height="%d" fill="%s" opacity="0.3"/>`,
-			padding, currentY, labelWidth, categoryHeaderHeight, cat.Color))
-		buf.WriteString(fmt.Sprintf(`<text x="%d" y="%d" class="category">%s</text>`,
-			padding+10, currentY+22, escapeXML(cat.Name)))
+			padding, currentY, labelWidth, catH, cat.Color))
+
+		// Category name with wrapping
+		catLines := wrapText(cat.Name, 30)
+		if len(catLines) <= 1 {
+			buf.WriteString(fmt.Sprintf(`<text x="%d" y="%d" class="category">%s</text>`,
+				padding+10, currentY+22, escapeXML(cat.Name)))
+		} else {
+			buf.WriteString(fmt.Sprintf(`<text x="%d" y="%d" class="category">`, padding+10, currentY+18))
+			for i, ln := range catLines {
+				dy := 4
+				if i > 0 {
+					dy = 14
+				}
+				buf.WriteString(fmt.Sprintf(`<tspan x="%d" dy="%d">%s</tspan>`, padding+10, dy, escapeXML(ln)))
+			}
+			buf.WriteString(`</text>`)
+		}
 
 		// Category background span
 		buf.WriteString(fmt.Sprintf(`<rect x="%d" y="%d" width="%d" height="%d" fill="%s" opacity="0.05"/>`,
-			padding+labelWidth, currentY, totalQuarters*quarterWidth, categoryHeaderHeight, cat.Color))
+			padding+labelWidth, currentY, totalQuarters*quarterWidth, catH, cat.Color))
 
-		currentY += categoryHeaderHeight
+		currentY += catH
 
 		// Tasks
 		for _, task := range cat.Tasks {
+			// dynamic task height
+			h := perTaskHeights[task.ID]
+			if h == 0 {
+				h = baseRowHeight
+			}
 			// Task label background
 			buf.WriteString(fmt.Sprintf(`<rect x="%d" y="%d" width="%d" height="%d" fill="#fff" stroke="#ddd" stroke-width="1"/>`,
-				padding, currentY, labelWidth, rowHeight))
+				padding, currentY, labelWidth, h))
 
-			// Task title
-			buf.WriteString(fmt.Sprintf(`<text x="%d" y="%d" class="label">%s</text>`,
-				padding+10, currentY+18, escapeXML(truncate(task.Title, 25))))
-
-			// Task description
-			if task.Description != "" {
-				buf.WriteString(fmt.Sprintf(`<text x="%d" y="%d" class="desc">%s</text>`,
-					padding+10, currentY+32, escapeXML(truncate(task.Description, 30))))
+			// Title and description wrapped
+			titleLines := wrapText(task.Title, 28)
+			descLines := wrapText(task.Description, 36)
+			textY := currentY + 14
+			if len(titleLines) > 0 {
+				buf.WriteString(fmt.Sprintf(`<text x="%d" y="%d" class="label">`, padding+10, textY))
+				for i, ln := range titleLines {
+					dy := 0
+					if i > 0 {
+						dy = titleLineHeight
+					}
+					buf.WriteString(fmt.Sprintf(`<tspan x="%d" dy="%d">%s</tspan>`, padding+10, dy, escapeXML(ln)))
+				}
+				buf.WriteString(`</text>`)
+				textY += len(titleLines) * titleLineHeight
+			}
+			if len(descLines) > 0 {
+				buf.WriteString(fmt.Sprintf(`<text x="%d" y="%d" class="desc">`, padding+10, textY+4))
+				for i, ln := range descLines {
+					dy := 0
+					if i > 0 {
+						dy = descLineHeight
+					}
+					buf.WriteString(fmt.Sprintf(`<tspan x="%d" dy="%d">%s</tspan>`, padding+10, dy, escapeXML(ln)))
+				}
+				buf.WriteString(`</text>`)
 			}
 
 			// Draw task bar
@@ -103,11 +197,15 @@ func GenerateSVG(chart *Chart) (string, error) {
 				barX := padding + labelWidth + startIdx*quarterWidth
 				barWidth := (endIdx - startIdx + 1) * quarterWidth
 				barY := currentY + 8
-				barHeight := rowHeight - 16
+				barHeight := h - 16
 
 				taskColor := task.Color
 				if taskColor == "" {
 					taskColor = cat.Color
+				}
+
+				if barHeight < 12 {
+					barHeight = 12
 				}
 
 				buf.WriteString(fmt.Sprintf(`<rect x="%d" y="%d" width="%d" height="%d" fill="%s" rx="4" opacity="0.8"/>`,
@@ -116,7 +214,7 @@ func GenerateSVG(chart *Chart) (string, error) {
 					barX+2, barY, barWidth-4, barHeight, darken(taskColor)))
 			}
 
-			currentY += rowHeight
+			currentY += h
 		}
 	}
 
