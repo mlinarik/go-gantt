@@ -1,10 +1,10 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: go-ghantt
-  namespace: go-ghantt
+  name: go-gantt
+  namespace: go-gantt
   labels:
-    app: go-ghantt
+    app: go-gantt
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
@@ -12,16 +12,16 @@ spec:
   ingressClassName: nginx
   tls:
   - hosts:
-    - go-ghantt.mlinarik.com
-    secretName: go-ghantt-tls
+    - go-gantt.mlinarik.com
+    secretName: go-gantt-tls
   rules:
-  - host: go-ghantt.mlinarik.com
+  - host: go-gantt.mlinarik.com
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: go-ghantt
+            name: go-gantt
             port:
               number: 8080
