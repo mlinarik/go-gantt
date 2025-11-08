@@ -397,11 +397,26 @@ async function openLoadChartModal() {
                         <div class="chart-item-date">ID: ${chart.id}</div>
                     </div>
                     <div class="chart-item-actions">
-                        <button class="btn btn-sm btn-primary" onclick="loadChart('${chart.id}')">Load</button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteChart('${chart.id}')">Delete</button>
+                        <button class="btn btn-sm btn-primary load-chart-btn" data-chart-id="${chart.id}">Load</button>
+                        <button class="btn btn-sm btn-danger delete-chart-btn" data-chart-id="${chart.id}">Delete</button>
                     </div>
                 `;
                 chartList.appendChild(item);
+            });
+            
+            // Add event listeners to load and delete buttons
+            document.querySelectorAll('.load-chart-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const chartId = e.target.getAttribute('data-chart-id');
+                    loadChart(chartId);
+                });
+            });
+            
+            document.querySelectorAll('.delete-chart-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const chartId = e.target.getAttribute('data-chart-id');
+                    deleteChart(chartId);
+                });
             });
         }
         
@@ -423,7 +438,6 @@ async function loadChart(id) {
         
         currentChart = await response.json();
         updateUIFromChart();
-        renderChart();
         closeLoadChartModal();
         alert('Chart loaded successfully!');
     } catch (error) {
