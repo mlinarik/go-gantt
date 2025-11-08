@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: go-ghantt-data
-  namespace: go-ghantt
+  name: go-gantt-data
+  namespace: go-gantt
   labels:
-    app: go-ghantt
+    app: go-gantt
 spec:
   accessModes:
     - ReadWriteOnce
