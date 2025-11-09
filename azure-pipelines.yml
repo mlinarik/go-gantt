@@ -101,14 +101,16 @@ steps:
         which java
         java -version
         
-        # The issue is that sonar-scanner script uses 'sh' not 'bash'
-        # and environment might not be passed correctly.
-        # Let's patch the sonar-scanner script to fix the java check
+        # The sonar-scanner uses '#!/usr/bin/env sh' which doesn't inherit env well
+        # Let's modify it more carefully to just add PATH after the shebang
         ORIGINAL_SCANNER="$SCANNER_PATH/sonar-scanner"
         PATCHED_SCANNER="/tmp/sonar-scanner-patched"
         
-        # Copy and modify the scanner to explicitly set JAVA_HOME
-        sed "s|#!/usr/bin/env sh|#!/bin/bash\nexport JAVA_HOME=\"$JAVA_HOME\"\nexport PATH=\"$JAVA_HOME/bin:\$PATH\"|" "$ORIGINAL_SCANNER" > "$PATCHED_SCANNER"
+        # Insert PATH and JAVA_HOME right after the shebang line
+        head -n 1 "$ORIGINAL_SCANNER" > "$PATCHED_SCANNER"
+        echo "export JAVA_HOME=\"$JAVA_HOME\"" >> "$PATCHED_SCANNER"
+        echo "export PATH=\"$JAVA_HOME/bin:\$PATH\"" >> "$PATCHED_SCANNER"
+        tail -n +2 "$ORIGINAL_SCANNER" >> "$PATCHED_SCANNER"
         chmod +x "$PATCHED_SCANNER"
         
         echo "Running patched scanner..."
