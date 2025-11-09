@@ -7,8 +7,9 @@ pool:
   name: 'adc'
 
 variables:
-  GOVERSION: '1.21'
-  # SONAR_PROJECT_KEY should be defined as a secret variable in Azure DevOps Pipeline variables
+  - group: 'sonarqube'
+  - name: GOVERSION
+    value: '1.21'
 
 steps:
   # Prepare Analysis Configuration
