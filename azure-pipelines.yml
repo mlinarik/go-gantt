@@ -34,6 +34,18 @@ steps:
       echo "##vso[task.prependpath]$(pwd)/sonar-scanner-5.0.1.3006-linux/bin"
     displayName: 'Install SonarScanner CLI'
 
+  # Install Go
+  - task: GoTool@0
+    inputs:
+      version: '$(GOVERSION)'
+    displayName: 'Install Go $(GOVERSION)'
+
+  # Verify Go installation
+  - script: |
+      go version
+      echo "Go is available at: $(which go)"
+    displayName: 'Verify Go Installation'
+
   # Get Go dependencies
   - script: |
       go mod download
