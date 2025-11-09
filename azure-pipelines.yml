@@ -97,24 +97,15 @@ steps:
         export PATH="$JAVA_HOME/bin:$PATH"
         which java
         java -version
-        
-        # Debug: Check what sonar-scanner is looking for
         echo "PATH is: $PATH"
-        echo "Checking sonar-scanner script..."
-        head -20 "$SCANNER_PATH/sonar-scanner"
         
-        # Modify sonar-scanner to use our JAVA_HOME
-        # Create a wrapper script
-        cat > /tmp/sonar-wrapper.sh << 'EOF'
-#!/bin/bash
-export JAVA_HOME="$JAVA_HOME"
-export PATH="$JAVA_HOME/bin:$PATH"
-exec "$SCANNER_PATH/sonar-scanner" "$@"
-EOF
-        chmod +x /tmp/sonar-wrapper.sh
+        # Check the sonar-scanner script
+        echo "First lines of sonar-scanner:"
+        head -5 "$SCANNER_PATH/sonar-scanner"
         
-        # Run via wrapper
-        JAVA_HOME="$JAVA_HOME" SCANNER_PATH="$SCANNER_PATH" /tmp/sonar-wrapper.sh \
+        # Directly set JAVA_HOME and PATH for sonar-scanner
+        env JAVA_HOME="$JAVA_HOME" PATH="$JAVA_HOME/bin:$PATH" \
+          "$SCANNER_PATH/sonar-scanner" \
           -Dsonar.projectKey=$(SONAR_PROJECT_KEY) \
           -Dsonar.projectName=go-gantt \
           -Dsonar.sources=. \
