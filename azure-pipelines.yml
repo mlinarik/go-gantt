@@ -89,13 +89,16 @@ steps:
   - bash: |
       echo "SCANNER_PATH variable: $SCANNER_PATH"
       echo "JAVA_HOME variable: $JAVA_HOME"
-      ls -la "$(Agent.BuildDirectory)"
+      
       if [ -f "$SCANNER_PATH/sonar-scanner" ]; then
         echo "SonarScanner found at: $SCANNER_PATH/sonar-scanner"
-        export JAVA_HOME="$JAVA_HOME"
-        export PATH="$JAVA_HOME/bin:$PATH"
+        
+        # Verify Java is accessible
+        which java
         java -version
-        "$SCANNER_PATH/sonar-scanner" \
+        
+        # Run sonar-scanner with explicit JAVA_HOME
+        JAVA_HOME="$JAVA_HOME" "$SCANNER_PATH/sonar-scanner" \
           -Dsonar.projectKey=$(SONAR_PROJECT_KEY) \
           -Dsonar.projectName=go-gantt \
           -Dsonar.sources=. \
@@ -104,8 +107,6 @@ steps:
           -Dsonar.go.coverage.reportPaths=coverage.out
       else
         echo "ERROR: SonarScanner not found at: $SCANNER_PATH/sonar-scanner"
-        echo "Contents of Agent.BuildDirectory:"
-        find "$(Agent.BuildDirectory)" -name "sonar-scanner" -type f
         exit 1
       fi
     displayName: 'Run SonarQube Analysis'
