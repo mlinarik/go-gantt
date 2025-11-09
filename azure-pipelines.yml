@@ -93,21 +93,27 @@ steps:
       if [ -f "$SCANNER_PATH/sonar-scanner" ]; then
         echo "SonarScanner found at: $SCANNER_PATH/sonar-scanner"
         
-        # Verify Java
+        # Ensure Java is in PATH
         export JAVA_HOME="$JAVA_HOME"
         export PATH="$JAVA_HOME/bin:$PATH"
+        
+        # Verify java is accessible
         which java
         java -version
         
-        # Read and display more of the sonar-scanner script to understand requirements
-        echo "Inspecting sonar-scanner script requirements:"
-        head -30 "$SCANNER_PATH/sonar-scanner" | grep -A 5 "Required"
+        # The issue is that sonar-scanner script uses 'sh' not 'bash'
+        # and environment might not be passed correctly.
+        # Let's patch the sonar-scanner script to fix the java check
+        ORIGINAL_SCANNER="$SCANNER_PATH/sonar-scanner"
+        PATCHED_SCANNER="/tmp/sonar-scanner-patched"
         
-        # Try running with explicit environment and working directory
+        # Copy and modify the scanner to explicitly set JAVA_HOME
+        sed "s|#!/usr/bin/env sh|#!/bin/bash\nexport JAVA_HOME=\"$JAVA_HOME\"\nexport PATH=\"$JAVA_HOME/bin:\$PATH\"|" "$ORIGINAL_SCANNER" > "$PATCHED_SCANNER"
+        chmod +x "$PATCHED_SCANNER"
+        
+        echo "Running patched scanner..."
         cd "$(Build.SourcesDirectory)"
-        JAVA_HOME="$JAVA_HOME" \
-        PATH="$JAVA_HOME/bin:$PATH" \
-        bash "$SCANNER_PATH/sonar-scanner" \
+        "$PATCHED_SCANNER" \
           -Dsonar.projectKey=$(SONAR_PROJECT_KEY) \
           -Dsonar.projectName=go-gantt \
           -Dsonar.sources=. \
