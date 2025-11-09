@@ -7,12 +7,12 @@ pool:
   name: 'adc'
 
 variables:
-  - group: 'sonarqube'
+  - group: 'sonarqube'  # Should contain: SONAR_PROJECT_KEY, SONAR_HOST_URL, SONAR_TOKEN
   - name: GOVERSION
     value: '1.21'
 
 steps:
-  # Check and install Java (required for SonarQube)
+  # Install Java (required for SonarQube Scanner)
   - script: |
       if ! command -v java &> /dev/null; then
         sudo apt-get update
@@ -25,16 +25,12 @@ steps:
       java -version
     displayName: 'Setup Java 17'
 
-  # Prepare Analysis Configuration
-  - task: SonarQubePrepare@5
-    displayName: 'Prepare SonarQube Analysis'
-    inputs:
-      SonarQube: 'SonarQube'
-      scannerMode: 'CLI'
-      configMode: 'manual'
-      cliProjectKey: '$(SONAR_PROJECT_KEY)'
-      cliProjectName: 'go-gantt'
-      cliSources: '.'
+  # Install SonarScanner CLI
+  - script: |
+      wget -q https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
+      unzip -q sonar-scanner-cli-5.0.1.3006-linux.zip
+      echo "##vso[task.prependpath]$(pwd)/sonar-scanner-5.0.1.3006-linux/bin"
+    displayName: 'Install SonarScanner CLI'
 
   # Set up Go environment
   - task: GoTool@0
@@ -52,18 +48,19 @@ steps:
       go build -v -o go-gantt .
     displayName: 'Build Go application'
 
-  # Run tests (optional but recommended)
+  # Run tests with coverage
   - script: |
-      go test -v ./...
-    displayName: 'Run tests'
+      go test -v -coverprofile=coverage.out ./...
+    displayName: 'Run tests with coverage'
     continueOnError: true
 
-  # Run Code Analysis
-  - task: SonarQubeAnalyze@5
-    displayName: 'Run SonarQube Code Analysis'
-
-  # Publish Quality Gate Result
-  - task: SonarQubePublish@5
-    displayName: 'Publish SonarQube Quality Gate Result'
-    inputs:
-      pollingTimeoutSec: '300'
+  # Run SonarQube Analysis
+  - script: |
+      sonar-scanner \
+        -Dsonar.projectKey=$(SONAR_PROJECT_KEY) \
+        -Dsonar.projectName=go-gantt \
+        -Dsonar.sources=. \
+        -Dsonar.host.url=$(SONAR_HOST_URL) \
+        -Dsonar.token=$(SONAR_TOKEN) \
+        -Dsonar.go.coverage.reportPaths=coverage.out
+    displayName: 'Run SonarQube Analysis'
