@@ -68,13 +68,23 @@ steps:
 
   # Run SonarQube Analysis
   - bash: |
-      "$SCANNER_PATH/sonar-scanner" \
-        -Dsonar.projectKey=$(SONAR_PROJECT_KEY) \
-        -Dsonar.projectName=go-gantt \
-        -Dsonar.sources=. \
-        -Dsonar.host.url=$(SONAR_HOST_URL) \
-        -Dsonar.token=$(SONAR_TOKEN) \
-        -Dsonar.go.coverage.reportPaths=coverage.out
+      echo "SCANNER_PATH variable: $SCANNER_PATH"
+      ls -la "$(Agent.BuildDirectory)"
+      if [ -f "$SCANNER_PATH/sonar-scanner" ]; then
+        echo "SonarScanner found at: $SCANNER_PATH/sonar-scanner"
+        "$SCANNER_PATH/sonar-scanner" \
+          -Dsonar.projectKey=$(SONAR_PROJECT_KEY) \
+          -Dsonar.projectName=go-gantt \
+          -Dsonar.sources=. \
+          -Dsonar.host.url=$(SONAR_HOST_URL) \
+          -Dsonar.token=$(SONAR_TOKEN) \
+          -Dsonar.go.coverage.reportPaths=coverage.out
+      else
+        echo "ERROR: SonarScanner not found at: $SCANNER_PATH/sonar-scanner"
+        echo "Contents of Agent.BuildDirectory:"
+        find "$(Agent.BuildDirectory)" -name "sonar-scanner" -type f
+        exit 1
+      fi
     displayName: 'Run SonarQube Analysis'
     env:
       SONAR_PROJECT_KEY: $(SONAR_PROJECT_KEY)
