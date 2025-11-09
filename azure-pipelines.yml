@@ -88,9 +88,13 @@ steps:
   # Run SonarQube Analysis
   - bash: |
       echo "SCANNER_PATH variable: $SCANNER_PATH"
+      echo "JAVA_HOME variable: $JAVA_HOME"
       ls -la "$(Agent.BuildDirectory)"
       if [ -f "$SCANNER_PATH/sonar-scanner" ]; then
         echo "SonarScanner found at: $SCANNER_PATH/sonar-scanner"
+        export JAVA_HOME="$JAVA_HOME"
+        export PATH="$JAVA_HOME/bin:$PATH"
+        java -version
         "$SCANNER_PATH/sonar-scanner" \
           -Dsonar.projectKey=$(SONAR_PROJECT_KEY) \
           -Dsonar.projectName=go-gantt \
@@ -109,3 +113,4 @@ steps:
       SONAR_PROJECT_KEY: $(SONAR_PROJECT_KEY)
       SONAR_HOST_URL: $(SONAR_HOST_URL)
       SONAR_TOKEN: $(SONAR_TOKEN)
+      JAVA_HOME: $(JAVA_HOME)
