@@ -90,42 +90,35 @@ steps:
       echo "SCANNER_PATH variable: $SCANNER_PATH"
       echo "JAVA_HOME variable: $JAVA_HOME"
       
-      if [ -f "$SCANNER_PATH/sonar-scanner" ]; then
-        echo "SonarScanner found at: $SCANNER_PATH/sonar-scanner"
-        
-        # Ensure Java is in PATH
-        export JAVA_HOME="$JAVA_HOME"
-        export PATH="$JAVA_HOME/bin:$PATH"
-        
-        # Verify java is accessible
-        which java
-        java -version
-        
-        # The sonar-scanner uses '#!/usr/bin/env sh' which doesn't inherit env well
-        # Let's modify it more carefully to just add PATH after the shebang
-        ORIGINAL_SCANNER="$SCANNER_PATH/sonar-scanner"
-        PATCHED_SCANNER="/tmp/sonar-scanner-patched"
-        
-        # Insert PATH and JAVA_HOME right after the shebang line
-        head -n 1 "$ORIGINAL_SCANNER" > "$PATCHED_SCANNER"
-        echo "export JAVA_HOME=\"$JAVA_HOME\"" >> "$PATCHED_SCANNER"
-        echo "export PATH=\"$JAVA_HOME/bin:\$PATH\"" >> "$PATCHED_SCANNER"
-        tail -n +2 "$ORIGINAL_SCANNER" >> "$PATCHED_SCANNER"
-        chmod +x "$PATCHED_SCANNER"
-        
-        echo "Running patched scanner..."
-        cd "$(Build.SourcesDirectory)"
-        "$PATCHED_SCANNER" \
-          -Dsonar.projectKey=$(SONAR_PROJECT_KEY) \
-          -Dsonar.projectName=go-gantt \
-          -Dsonar.sources=. \
-          -Dsonar.host.url=$(SONAR_HOST_URL) \
-          -Dsonar.token=$(SONAR_TOKEN) \
-          -Dsonar.go.coverage.reportPaths=coverage.out
-      else
-        echo "ERROR: SonarScanner not found at: $SCANNER_PATH/sonar-scanner"
-        exit 1
+      # Ensure Java is in PATH
+      export JAVA_HOME="$JAVA_HOME"
+      export PATH="$JAVA_HOME/bin:$PATH"
+      
+      # Verify java is accessible
+      which java
+      java -version
+      
+      # Find the scanner jar
+      SCANNER_HOME="$(dirname $SCANNER_PATH)"
+      SCANNER_JAR="$SCANNER_HOME/lib/sonar-scanner-cli-5.0.1.3006.jar"
+      
+      if [ ! -f "$SCANNER_JAR" ]; then
+        echo "Looking for scanner jar..."
+        find "$SCANNER_HOME" -name "sonar-scanner-cli*.jar"
+        SCANNER_JAR=$(find "$SCANNER_HOME" -name "sonar-scanner-cli*.jar" | head -1)
       fi
+      
+      echo "Scanner jar: $SCANNER_JAR"
+      
+      # Run sonar-scanner directly via Java
+      cd "$(Build.SourcesDirectory)"
+      java -jar "$SCANNER_JAR" \
+        -Dsonar.projectKey=$(SONAR_PROJECT_KEY) \
+        -Dsonar.projectName=go-gantt \
+        -Dsonar.sources=. \
+        -Dsonar.host.url=$(SONAR_HOST_URL) \
+        -Dsonar.token=$(SONAR_TOKEN) \
+        -Dsonar.go.coverage.reportPaths=coverage.out
     displayName: 'Run SonarQube Analysis'
     env:
       SONAR_PROJECT_KEY: $(SONAR_PROJECT_KEY)
