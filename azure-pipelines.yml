@@ -12,6 +12,14 @@ variables:
     value: '1.21'
 
 steps:
+  # Install Java (required for SonarQube)
+  - task: JavaToolInstaller@0
+    displayName: 'Install Java'
+    inputs:
+      versionSpec: '17'
+      jdkArchitectureOption: 'x64'
+      jdkSourceOption: 'PreInstalled'
+
   # Prepare Analysis Configuration
   - task: SonarQubePrepare@5
     displayName: 'Prepare SonarQube Analysis'
