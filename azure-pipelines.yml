@@ -5,6 +5,8 @@ trigger:
 
 pool:
   name: 'adc'
+  demands:
+    - agent.name -equals docker00
 
 variables:
   - group: 'sonarqube'  # Should contain: SONAR_PROJECT_KEY, SONAR_HOST_URL, SONAR_TOKEN
