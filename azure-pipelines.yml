@@ -93,12 +93,15 @@ steps:
       if [ -f "$SCANNER_PATH/sonar-scanner" ]; then
         echo "SonarScanner found at: $SCANNER_PATH/sonar-scanner"
         
+        # Add Java to PATH
+        export PATH="$JAVA_HOME/bin:$PATH"
+        
         # Verify Java is accessible
         which java
         java -version
         
-        # Run sonar-scanner with explicit JAVA_HOME
-        JAVA_HOME="$JAVA_HOME" "$SCANNER_PATH/sonar-scanner" \
+        # Run sonar-scanner
+        "$SCANNER_PATH/sonar-scanner" \
           -Dsonar.projectKey=$(SONAR_PROJECT_KEY) \
           -Dsonar.projectName=go-gantt \
           -Dsonar.sources=. \
