@@ -31,7 +31,9 @@ steps:
   - script: |
       wget -q https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
       unzip -q sonar-scanner-cli-5.0.1.3006-linux.zip
-      echo "##vso[task.prependpath]$(pwd)/sonar-scanner-5.0.1.3006-linux/bin"
+      SCANNER_PATH=$(pwd)/sonar-scanner-5.0.1.3006-linux/bin
+      echo "##vso[task.setvariable variable=SCANNER_PATH]$SCANNER_PATH"
+      echo "##vso[task.prependpath]$SCANNER_PATH"
     displayName: 'Install SonarScanner CLI'
 
   # Install Go
@@ -64,6 +66,7 @@ steps:
 
   # Run SonarQube Analysis
   - script: |
+      export PATH="$SCANNER_PATH:$PATH"
       sonar-scanner \
         -Dsonar.projectKey=$(SONAR_PROJECT_KEY) \
         -Dsonar.projectName=go-gantt \
@@ -72,3 +75,7 @@ steps:
         -Dsonar.token=$(SONAR_TOKEN) \
         -Dsonar.go.coverage.reportPaths=coverage.out
     displayName: 'Run SonarQube Analysis'
+    env:
+      SONAR_PROJECT_KEY: $(SONAR_PROJECT_KEY)
+      SONAR_HOST_URL: $(SONAR_HOST_URL)
+      SONAR_TOKEN: $(SONAR_TOKEN)
