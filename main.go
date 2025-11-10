@@ -11,6 +11,14 @@ import (
 	"github.com/gorilla/mux"
 )
 
+const (
+	chartIDPath         = "/charts/{id}"
+	contentTypeHeader   = "Content-Type"
+	jsonContentType     = "application/json"
+	chartNotFoundMsg    = "Chart not found"
+	contentDisposition  = "Content-Disposition"
+)
+
 var (
 	store    *ChartStore
 	storeMux sync.RWMutex
@@ -30,12 +38,12 @@ func main() {
 	api := router.PathPrefix("/api").Subrouter()
 	api.HandleFunc("/charts", getChartsHandler).Methods("GET")
 	api.HandleFunc("/charts", createChartHandler).Methods("POST")
-	api.HandleFunc("/charts/{id}", getChartHandler).Methods("GET")
-	api.HandleFunc("/charts/{id}", updateChartHandler).Methods("PUT")
-	api.HandleFunc("/charts/{id}", deleteChartHandler).Methods("DELETE")
-	api.HandleFunc("/charts/{id}/export/svg", exportSVGHandler).Methods("GET")
-	api.HandleFunc("/charts/{id}/export/png", exportPNGHandler).Methods("GET")
-	api.HandleFunc("/charts/{id}/export/pdf", exportPDFHandler).Methods("GET")
+	api.HandleFunc(chartIDPath, getChartHandler).Methods("GET")
+	api.HandleFunc(chartIDPath, updateChartHandler).Methods("PUT")
+	api.HandleFunc(chartIDPath, deleteChartHandler).Methods("DELETE")
+	api.HandleFunc(chartIDPath+"/export/svg", exportSVGHandler).Methods("GET")
+	api.HandleFunc(chartIDPath+"/export/png", exportPNGHandler).Methods("GET")
+	api.HandleFunc(chartIDPath+"/export/pdf", exportPDFHandler).Methods("GET")
 
 	// Serve static files
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./static")))
@@ -54,7 +62,7 @@ func getChartsHandler(w http.ResponseWriter, r *http.Request) {
 	charts := store.GetAll()
 	storeMux.RUnlock()
 
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set(contentTypeHeader, jsonContentType)
 	json.NewEncoder(w).Encode(charts)
 }
 
@@ -70,7 +78,7 @@ func createChartHandler(w http.ResponseWriter, r *http.Request) {
 	store.Save(dataFile)
 	storeMux.Unlock()
 
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set(contentTypeHeader, jsonContentType)
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(chart)
 }
@@ -84,11 +92,11 @@ func getChartHandler(w http.ResponseWriter, r *http.Request) {
 	storeMux.RUnlock()
 
 	if chart == nil {
-		http.Error(w, "Chart not found", http.StatusNotFound)
+		http.Error(w, chartNotFoundMsg, http.StatusNotFound)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set(contentTypeHeader, jsonContentType)
 	json.NewEncoder(w).Encode(chart)
 }
 
@@ -108,7 +116,7 @@ func updateChartHandler(w http.ResponseWriter, r *http.Request) {
 	store.Save(dataFile)
 	storeMux.Unlock()
 
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set(contentTypeHeader, jsonContentType)
 	json.NewEncoder(w).Encode(chart)
 }
 
@@ -133,7 +141,7 @@ func exportSVGHandler(w http.ResponseWriter, r *http.Request) {
 	storeMux.RUnlock()
 
 	if chart == nil {
-		http.Error(w, "Chart not found", http.StatusNotFound)
+		http.Error(w, chartNotFoundMsg, http.StatusNotFound)
 		return
 	}
 
@@ -143,8 +151,8 @@ func exportSVGHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "image/svg+xml")
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"chart-%s.svg\"", id))
+	w.Header().Set(contentTypeHeader, "image/svg+xml")
+	w.Header().Set(contentDisposition, fmt.Sprintf("attachment; filename=\"chart-%s.svg\"", id))
 	w.Write([]byte(svg))
 }
 
@@ -157,7 +165,7 @@ func exportPNGHandler(w http.ResponseWriter, r *http.Request) {
 	storeMux.RUnlock()
 
 	if chart == nil {
-		http.Error(w, "Chart not found", http.StatusNotFound)
+		http.Error(w, chartNotFoundMsg, http.StatusNotFound)
 		return
 	}
 
@@ -167,8 +175,8 @@ func exportPNGHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "image/png")
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"chart-%s.png\"", id))
+	w.Header().Set(contentTypeHeader, "image/png")
+	w.Header().Set(contentDisposition, fmt.Sprintf("attachment; filename=\"chart-%s.png\"", id))
 	w.Write(pngData)
 }
 
@@ -181,7 +189,7 @@ func exportPDFHandler(w http.ResponseWriter, r *http.Request) {
 	storeMux.RUnlock()
 
 	if chart == nil {
-		http.Error(w, "Chart not found", http.StatusNotFound)
+		http.Error(w, chartNotFoundMsg, http.StatusNotFound)
 		return
 	}
 
@@ -191,7 +199,7 @@ func exportPDFHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/pdf")
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"chart-%s.pdf\"", id))
+	w.Header().Set(contentTypeHeader, "application/pdf")
+	w.Header().Set(contentDisposition, fmt.Sprintf("attachment; filename=\"chart-%s.pdf\"", id))
 	w.Write(pdfData)
 }
