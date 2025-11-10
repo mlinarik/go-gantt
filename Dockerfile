@@ -18,7 +18,7 @@ RUN go get -u ./... && \
     CGO_ENABLED=0 GOOS=linux go build -o go-ghant
 
 # Final stage
-FROM alpine:latest
+FROM alpine:3.19
 
 # Update package index and upgrade all packages, then install ca-certificates
 RUN apk update && \
