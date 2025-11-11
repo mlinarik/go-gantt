@@ -14,6 +14,11 @@ variables:
     value: '1.23.3'
 
 steps:
+  # Ensure a full git clone so SonarQube can collect SCM blame information
+  - checkout: self
+    fetchDepth: 0
+    persistCredentials: true
+    clean: true
   # Install Java (required for SonarQube Scanner)
   - script: |
       if ! command -v java &> /dev/null; then
